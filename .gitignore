@@ -1,0 +1,29 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Backend (Python)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.pytest_cache/
+htmlcov/
+site-packages/
+
+# Mobile App (Node/Expo)
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+mobile-app/android/
+mobile-app/ios/

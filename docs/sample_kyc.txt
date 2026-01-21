@@ -1,0 +1,4 @@
+This is a dummy KYC document content.
+User ID: 12345
+Document Type: Aadhar Card
+Status: Verified
