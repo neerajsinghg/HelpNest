@@ -1,0 +1,39 @@
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: opacity 0.3s;
+    font-family: 'Roboto', sans-serif;
+}
+
+.btn:hover:not(:disabled) {
+    opacity: 0.8;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-success {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-warning {
+    background: #ff9800;
+    color: white;
+}

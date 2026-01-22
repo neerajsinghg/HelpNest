@@ -23,6 +23,8 @@ class JobResponse(JobBase):
     id: str = Field(alias="_id")
     customer_id: str
     status: JobStatus = JobStatus.PENDING
+    payment_id: Optional[str] = None
+    completion_time: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(

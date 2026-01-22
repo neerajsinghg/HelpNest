@@ -10,9 +10,10 @@ router = APIRouter()
 
 class ServiceBase(BaseModel):
     name: str
-    category: str
+    category_id: str
     price: float
     description: str
+    images: List[str] = []  # List of GridFS file IDs
 
 class ServiceCreate(ServiceBase):
     pass
@@ -20,6 +21,8 @@ class ServiceCreate(ServiceBase):
 class ServiceResponse(ServiceBase):
     id: str = Field(alias="_id")
     provider_id: str
+    average_rating: float = 0.0
+    total_reviews: int = 0
 
     model_config = ConfigDict(
         populate_by_name=True,
