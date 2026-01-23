@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, users, services, jobs, kyc, payments, reviews, categories, admin, geolocation, provider, realtime, otp_auth
+from fastapi.staticfiles import StaticFiles
+from app.routes import auth, users, services, jobs, kyc, payments, reviews, categories, admin, geolocation, provider, realtime, otp_auth, states, upload
 from app.core.config import settings
 
 app = FastAPI(title="HelpNest API", version="1.0.0")
@@ -18,6 +19,9 @@ app.add_middleware(
 async def root():
     return {"message": "Welcome to HelpNest API"}
 
+# Mount uploads directory to serve static files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 from app.core.database import db
 
 @app.on_event("startup")
@@ -31,6 +35,8 @@ async def shutdown_db_client():
 # Register all routes
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(otp_auth.router, prefix="/api/auth", tags=["OTP Auth"])
+app.include_router(states.router, prefix="/api/states", tags=["States"])
+app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(services.router, prefix="/api/services", tags=["Services"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["Jobs"])

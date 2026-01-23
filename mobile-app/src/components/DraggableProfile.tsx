@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     useAnimatedStyle,
@@ -12,19 +12,22 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const BUTTON_SIZE = 60;
 
 export default function DraggableProfile() {
     const { userInfo, logout } = useAuth();
+    const router = useRouter();
     const [expanded, setExpanded] = useState(false);
 
     const x = useSharedValue(width - BUTTON_SIZE - 20); // Initial position (right side)
     const y = useSharedValue(50); // Initial top position
 
     const toggleExpand = () => {
-        setExpanded(!expanded);
+        // setExpanded(!expanded); // Removing expand logic for now
+        router.push('/(common)/profile'); // Navigate to profile
     };
 
     const context = useSharedValue({ x: 0, y: 0 });
@@ -91,14 +94,21 @@ export default function DraggableProfile() {
             <GestureDetector gesture={pan}>
                 <Animated.View style={[styles.draggableContainer, animatedStyle]}>
                     <TouchableOpacity onPress={toggleExpand} activeOpacity={0.9}>
-                        <LinearGradient
-                            colors={theme.gradients.primary as any}
-                            style={styles.circle}
-                        >
-                            <Text style={styles.initials}>
-                                {userInfo?.full_name?.charAt(0).toUpperCase() || 'U'}
-                            </Text>
-                        </LinearGradient>
+                        {userInfo?.profile_picture_url ? (
+                            <Image
+                                source={{ uri: userInfo.profile_picture_url }}
+                                style={[styles.circle, { borderWidth: 2, borderColor: '#FFF' }]}
+                            />
+                        ) : (
+                            <LinearGradient
+                                colors={theme.gradients.primary as any}
+                                style={styles.circle}
+                            >
+                                <Text style={styles.initials}>
+                                    {userInfo?.full_name?.charAt(0).toUpperCase() || 'U'}
+                                </Text>
+                            </LinearGradient>
+                        )}
                     </TouchableOpacity>
                 </Animated.View>
             </GestureDetector>

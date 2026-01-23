@@ -26,14 +26,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (phone, password) => {
     setIsLoading(true);
     try {
       console.log('Attempting login to:', `${API_URL}/auth/token`);
-      console.log('Email:', email);
+      console.log('Phone:', phone);
 
       const response = await axios.post(`${API_URL}/auth/token`,
-        `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+        `username=${encodeURIComponent(phone)}&password=${encodeURIComponent(password)}`,
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
@@ -51,31 +51,45 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       console.log('Login error:', e);
       console.log('Error response:', e.response?.data);
-      console.log('Error status:', e.response?.status);
-      console.log('Error message:', e.message);
       alert(`Login failed: ${e.response?.data?.detail || e.message}`);
       setIsLoading(false);
       return { success: false };
     }
   };
 
-  const register = async (email, password, fullName, phone) => {
+  // userData: { phone_number, password, full_name, dob, address, roles, current_role, category (opt), profile_picture_url (opt) }
+  const register = async (userData) => {
     setIsLoading(true);
     try {
       console.log('Attempting registration to:', `${API_URL}/auth/register`);
-      console.log('Data:', { email, full_name: fullName, phone_number: phone });
 
-      await axios.post(`${API_URL}/auth/register`, {
-        email, password, full_name: fullName, phone_number: phone
-      });
+      const payload = {
+        phone_number: userData.phone_number,
+        password: userData.password,
+        full_name: userData.full_name,
+        dob: userData.dob,
+        roles: userData.roles,
+        current_role: userData.current_role,
+        address: userData.address,
+      };
+
+      if (userData.category) {
+        payload.category = userData.category;
+      }
+      if (userData.profile_picture_url) {
+        payload.profile_picture_url = userData.profile_picture_url;
+      }
+
+      console.log('Register Payload:', payload);
+
+      await axios.post(`${API_URL}/auth/register`, payload);
 
       console.log('Registration successful, logging in...');
-      const loginResult = await login(email, password);
+      const loginResult = await login(userData.phone_number, userData.password);
       return loginResult;
     } catch (e) {
       console.log('Register error:', e);
       console.log('Error response:', e.response?.data);
-      console.log('Error status:', e.response?.status);
       alert(`Registration failed: ${e.response?.data?.detail || e.message}`);
       setIsLoading(false);
       return { success: false };
@@ -100,6 +114,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (userData) => {
+    if (!userToken) return { success: false };
+    setIsLoading(true);
+    try {
+      console.log('Updating profile:', userData);
+      const response = await axios.put(`${API_URL}/users/me`, userData, {
+        headers: { Authorization: `Bearer ${userToken}` }
+      });
+      setUserInfo(response.data);
+      setIsLoading(false);
+      return { success: true };
+    } catch (e) {
+      console.log('Update profile error', e);
+      alert(`Update failed: ${e.response?.data?.detail || e.message}`);
+      setIsLoading(false);
+      return { success: false };
+    }
+  };
+
   const isLoggedIn = async () => {
     try {
       setIsLoading(true);
@@ -119,7 +152,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ login, logout, register, switchRole, userToken, userInfo, isLoading }}>
+    <AuthContext.Provider value={{ login, logout, register, switchRole, updateProfile, userToken, userInfo, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,5 @@
 import { Slot, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useEffect, useState } from 'react';
@@ -53,7 +54,7 @@ function RootLayoutNav() {
   return <Slot />;
 }
 
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 
 export default function RootLayout() {
   return (

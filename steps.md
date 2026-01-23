@@ -77,9 +77,11 @@ Follow these steps to set up and run the HelpNest project systematically.
 
    ```powershell
    npm start -- --clear
+
+   npx expo start -c --tunnel #clear the cache and start the server
    ```
 
-5. **Scan QR code** with Expo Go app on your phone
+5. **Scan QR code** with Expo Go app on your phone on same wifi
    - Android: Use Expo Go app
    - iOS: Use Camera app (will open in Expo Go)
 
@@ -93,7 +95,7 @@ Follow these steps to set up and run the HelpNest project systematically.
 
 The mobile app uses **Expo Router** with file-based routing:
 
-```
+<!-- ```
 app/
 ├── _layout.tsx              # Root layout with auth protection
 ├── (auth)/                  # Public routes
@@ -103,28 +105,28 @@ app/
 │   └── index.tsx          # Service listing
 └── (provider)/            # Provider routes (protected)
     └── index.tsx          # Job management
-```
+``` -->
 
 ### Troubleshooting Mobile App
 
-**Issue: "Network Error" when logging in**
+<!-- **Issue: "Network Error" when logging in** -->
 
 - Ensure backend is running with `--host 0.0.0.0`
 - Verify `API_URL` in `AuthContext.js` matches your machine's IP
 - Check both devices are on the same WiFi network
 
-**Issue: App loads slowly**
+<!-- **Issue: App loads slowly** -->
 
 - First load takes 10-15 seconds (normal)
 - Subsequent reloads: 2-3 seconds
 - Use `npm start -- --clear` to clear cache if needed
 
-**Issue: "Welcome to HelpNest" stuck screen**
+<!-- **Issue: "Welcome to HelpNest" stuck screen** -->
 
 - This was fixed by migrating to Expo Router
 - If you see this, ensure you're using the latest code
 
-**Issue: Navigation errors**
+<!-- **Issue: Navigation errors** -->
 
 - Ensure all route files exist in `app/` folder
 - Check `app/_layout.tsx` for proper navigation setup

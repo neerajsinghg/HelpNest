@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, Image, TouchableOpacity, Platform } from 'react-native';
-import { TextInput, Button, Title, RadioButton, Checkbox, Menu, Divider } from 'react-native-paper';
+import { TextInput, Button, Title, Menu, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -8,20 +8,14 @@ import axios from 'axios';
 import { useAuth, API_URL } from '../../src/context/AuthContext';
 import { theme } from '../../src/constants/theme';
 
-export default function RegisterScreen() {
+export default function ProfileScreen() {
     const router = useRouter();
-    const { register, isLoading } = useAuth();
+    const { userInfo, updateProfile, isLoading } = useAuth();
 
-    // Steps: 0 = Personal, 1 = Address/Role
-    const [step, setStep] = useState(0);
-
-    // Personal Data
+    // Data State
     const [fullName, setFullName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
     const [dob, setDob] = useState(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [image, setImage] = useState(null);
+    const [image, setImage] = useState<string | null>(null);
 
     // Address Data
     const [addressLine, setAddressLine] = useState('');
@@ -29,22 +23,29 @@ export default function RegisterScreen() {
     const [pincode, setPincode] = useState('');
     const [selectedState, setSelectedState] = useState('');
 
-    // Role & Category
-    const [isProvider, setIsProvider] = useState(false);
-    const [category, setCategory] = useState('');
-
-    // Metadata
-    const [statesList, setStatesList] = useState([]);
-    const [categoriesList, setCategoriesList] = useState([]);
-
-    // UI State
+    // Metadata & UI
+    const [statesList, setStatesList] = useState<any[]>([]);
     const [showStateMenu, setShowStateMenu] = useState(false);
-    const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     useEffect(() => {
+        if (userInfo) {
+            setFullName(userInfo.full_name || '');
+            if (userInfo.dob) {
+                setDob(new Date(userInfo.dob));
+            }
+            if (userInfo.profile_picture_url) {
+                setImage(userInfo.profile_picture_url);
+            }
+            if (userInfo.address) {
+                setAddressLine(userInfo.address.address_line || '');
+                setDistrict(userInfo.address.district || '');
+                setPincode(userInfo.address.pincode || '');
+                setSelectedState(userInfo.address.state || '');
+            }
+        }
         fetchStates();
-        fetchCategories();
-    }, []);
+    }, [userInfo]);
 
     const fetchStates = async () => {
         try {
@@ -52,17 +53,6 @@ export default function RegisterScreen() {
             setStatesList(res.data);
         } catch (e) {
             console.log('Error fetching states:', e);
-        }
-    };
-
-    const fetchCategories = async () => {
-        try {
-            const res = await axios.get(`${API_URL}/categories/`);
-            setCategoriesList(res.data);
-        } catch (e) {
-            console.log('Error fetching categories:', e);
-            // Fallback if API fails
-            setCategoriesList([{ _id: '1', name: 'Plumber' }, { _id: '2', name: 'Electrician' }]);
         }
     };
 
@@ -79,34 +69,15 @@ export default function RegisterScreen() {
         }
     };
 
-    const handleRegister = async () => {
-        if (!fullName || !phone || !password || !addressLine || !district || !pincode || !selectedState) {
-            alert("Please fill all fields");
-            return;
-        }
-        if (phone.length !== 10) {
-            alert("Invalid Phone Number");
-            return;
-        }
-        if (isProvider && !category) {
-            alert("Please select a category");
-            return;
-        }
-
-        // Upload Image if exists
-        let profilePictureUrl = null;
-        if (image) {
-            // Implement upload logic later or assume local URI for now
-            // For MVP, we pass the local URI or upload first
-            // To make it work with backend, we should upload. 
-            // Skipping upload implementation for brevity in this step, sending URI string.
+    const handleUpdate = async () => {
+        // Upload logic skipped for MVP, sending URI
+        let profilePictureUrl = userInfo?.profile_picture_url;
+        if (image && image !== userInfo?.profile_picture_url) {
             profilePictureUrl = image;
         }
 
-        const userData = {
+        const updateData = {
             full_name: fullName,
-            phone_number: phone,
-            password: password,
             dob: dob.toISOString().split('T')[0],
             address: {
                 address_line: addressLine,
@@ -114,15 +85,13 @@ export default function RegisterScreen() {
                 district: district,
                 pincode: pincode
             },
-            roles: isProvider ? ['customer', 'provider'] : ['customer'],
-            current_role: isProvider ? 'provider' : 'customer',
-            category: isProvider ? category : null,
             profile_picture_url: profilePictureUrl
         };
 
-        const result = await register(userData);
+        const result = await updateProfile(updateData);
         if (result?.success) {
-            // handled in context
+            alert('Profile updated successfully!');
+            router.back();
         }
     };
 
@@ -134,7 +103,7 @@ export default function RegisterScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Title style={styles.title}>Create Account</Title>
+            <Title style={styles.title}>Edit Profile</Title>
 
             {/* Profile Picture */}
             <View style={styles.imageContainer}>
@@ -143,11 +112,21 @@ export default function RegisterScreen() {
                         <Image source={{ uri: image }} style={styles.profileImage} />
                     ) : (
                         <View style={styles.placeholderImage}>
-                            <Text style={styles.placeholderText}>Add Photo</Text>
+                            <Text style={styles.placeholderText}>No Photo</Text>
                         </View>
                     )}
                 </TouchableOpacity>
+                <Text style={styles.changePhotoText}>Change Photo</Text>
             </View>
+
+            {/* Read-Only Fields */}
+            <TextInput
+                label="Mobile Number"
+                value={userInfo?.phone_number}
+                editable={false}
+                style={[styles.input, styles.disabledInput]}
+                mode="outlined"
+            />
 
             {/* Personal Info */}
             <TextInput
@@ -157,22 +136,6 @@ export default function RegisterScreen() {
                 style={styles.input}
                 mode="outlined"
             />
-
-            <View style={styles.phoneInputContainer}>
-                <View style={styles.prefixContainer}>
-                    <Text style={styles.flag}>🇮🇳</Text>
-                    <Text style={styles.prefix}>+91</Text>
-                </View>
-                <TextInput
-                    label="Mobile Number"
-                    value={phone}
-                    onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
-                    keyboardType="phone-pad"
-                    maxLength={10}
-                    style={styles.phoneInput}
-                    mode="outlined"
-                />
-            </View>
 
             <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateInput}>
                 <View pointerEvents="none">
@@ -196,15 +159,6 @@ export default function RegisterScreen() {
                     maximumDate={new Date()}
                 />
             )}
-
-            <TextInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-                mode="outlined"
-            />
 
             <Divider style={styles.divider} />
             <Title style={styles.subTitle}>Address</Title>
@@ -265,65 +219,16 @@ export default function RegisterScreen() {
                 />
             </View>
 
-            <Divider style={styles.divider} />
-
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    status={isProvider ? 'checked' : 'unchecked'}
-                    onPress={() => setIsProvider(!isProvider)}
-                />
-                <Text style={styles.checkboxLabel} onPress={() => setIsProvider(!isProvider)}>
-                    Register as Service Provider?
-                </Text>
-            </View>
-
-            {isProvider && (
-                <Menu
-                    visible={showCategoryMenu}
-                    onDismiss={() => setShowCategoryMenu(false)}
-                    anchor={
-                        <TouchableOpacity onPress={() => setShowCategoryMenu(true)}>
-                            <View pointerEvents="none">
-                                <TextInput
-                                    label="Select Category"
-                                    value={category}
-                                    editable={false}
-                                    right={<TextInput.Icon icon="chevron-down" />}
-                                    mode="outlined"
-                                    style={styles.input}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    }
-                >
-                    <ScrollView style={{ maxHeight: 200 }}>
-                        {categoriesList.map((cat) => (
-                            <Menu.Item
-                                key={cat._id}
-                                onPress={() => { setCategory(cat.name); setShowCategoryMenu(false); }}
-                                title={cat.name}
-                            />
-                        ))}
-                    </ScrollView>
-                </Menu>
-            )}
-
             <Button
                 mode="contained"
-                onPress={handleRegister}
+                onPress={handleUpdate}
                 loading={isLoading}
                 style={styles.button}
                 contentStyle={{ paddingVertical: 8 }}
             >
-                Register
+                Save Changes
             </Button>
 
-            <Button
-                onPress={() => router.back()}
-                style={styles.link}
-            >
-                Already have an account? Login
-            </Button>
             <View style={{ height: 50 }} />
         </ScrollView>
     );
@@ -334,33 +239,16 @@ const styles = StyleSheet.create({
     title: { alignSelf: 'center', marginBottom: 20, fontSize: 24, fontWeight: 'bold', color: theme.colors.primary },
     subTitle: { fontSize: 18, marginBottom: 10, marginTop: 10, fontWeight: 'bold' },
     input: { marginBottom: 15, backgroundColor: '#fff' },
-    phoneInputContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-    prefixContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: 56,
-        paddingHorizontal: 10,
-        borderWidth: 1,
-        borderColor: '#79747E',
-        borderRadius: 4,
-        marginRight: 10,
-        backgroundColor: '#fff',
-        marginTop: 6
-    },
-    flag: { fontSize: 20, marginRight: 5 },
-    prefix: { fontSize: 16, fontWeight: 'bold' },
-    phoneInput: { flex: 1, backgroundColor: '#fff' },
+    disabledInput: { backgroundColor: '#f0f0f0' },
     imageContainer: { alignItems: 'center', marginBottom: 20 },
     imageWrapper: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden', backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
     profileImage: { width: 100, height: 100 },
     placeholderImage: { alignItems: 'center' },
     placeholderText: { fontSize: 12, color: '#888' },
+    changePhotoText: { marginTop: 8, color: theme.colors.primary, fontWeight: 'bold' },
     dateInput: { marginBottom: 15 },
     row: { flexDirection: 'row', justifyContent: 'space-between' },
     halfInput: { width: '48%' },
     divider: { marginVertical: 10 },
-    checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-    checkboxLabel: { fontSize: 16, marginLeft: 8 },
     button: { marginTop: 10, borderRadius: 8 },
-    link: { marginTop: 15 }
 });
